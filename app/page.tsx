@@ -1,33 +1,89 @@
+'use client'
+
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+
 import './home.css'
 
+type FormData = {
+  mobile: string
+  code: string
+}
+
 export default function Home() {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isValid },
+    watch,
+  } = useForm<FormData>({
+    mode: 'onChange',
+  })
+
+  const mobileValue = watch('mobile')
+
+  // 验证手机号格式
+  const validateMobile = (value: string) => {
+    if (!value) return '请输入手机号'
+    const mobileRegex = /^1[3-9]\d{9}$/
+    if (!mobileRegex.test(value)) return '手机号格式错误'
+    return true
+  }
+
+  // 验证验证码格式
+  const validateCode = (value: string) => {
+    if (!value) return '请输入验证码'
+    const codeRegex = /^\d{6}$/
+    if (!codeRegex.test(value)) return '验证码格式错误'
+    return true
+  }
+
+  // 提交表单
+  const onSubmit = async (data: FormData) => {
+    setIsSubmitting(true)
+    // 模拟API请求
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    console.log(data)
+    setIsSubmitting(false)
+  }
+
   return (
-    <form>
+    <form onSubmit={handleSubmit(onSubmit)}>
       <div className="form-item">
-        <input placeholder="手机号" name="mobile" />
-        {/* 表单错误提示，会出现两种情况
-        1.必填校验，错误提示“请输入手机号”
-        2.格式校验，需满足国内手机号规则，错误提示“手机号格式错误”
-        举例：<p className="form-error">手机号格式错误</p> */}
+        <input
+          placeholder="手机号"
+          {...register('mobile', {
+            validate: validateMobile,
+          })}
+        />
+        {errors.mobile && (
+          <p className="form-error">{errors.mobile.message}</p>
+        )}
       </div>
 
       <div className="form-item">
         <div className="input-group">
-          <input placeholder="验证码" name="code" />
-          {/* getcode默认disabled=true，当mobile满足表单验证条件后才位false */}
-          <button className="getcode" disabled>
+          <input
+            placeholder="验证码"
+            {...register('code', {
+              validate: validateCode,
+            })}
+          />
+          <button
+            className="getcode"
+            disabled={!isValid || !mobileValue}
+            type="button"
+          >
             获取验证码
           </button>
         </div>
-        {/* 表单错误提示，会出现两种情况
-        
-        1.必填校验，错误提示“请输入验证码”
-        2.格式校验，6位数字，错误提示“验证码格式错误”
-        举例：<p className="form-error">验证码格式错误</p> */}
+        {errors.code && <p className="form-error">{errors.code.message}</p>}
       </div>
 
-      {/* 表单提交中，按钮内的文字会变成“submiting......” */}
-      <button className="submit-btn">登录</button>
+      <button className="submit-btn" disabled={isSubmitting}>
+        {isSubmitting ? 'submiting......' : '登录'}
+      </button>
     </form>
-  );
+  )
 }
